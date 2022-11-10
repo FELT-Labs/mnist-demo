@@ -1,27 +1,33 @@
 """Test training process."""
 import json
 import random
+import shutil
 from pathlib import Path
 
 import numpy as np
 from data import get_mnist_data, get_mnist_datafiles
 from feltlabs.algorithm import aggregate, train
+from feltlabs.core.cryptography import decrypt_nacl
 from feltlabs.model import load_model
 from nacl.public import PrivateKey
 from sklearn.metrics import accuracy_score
 
+N_PARTITIONS = 10
+
 aggregation_key = PrivateKey.generate()
-scientist_key = PrivateKey.generate()
 
 model_def = {
     "model_type": "sklearn",
-    "model_name": "Lasso",
+    "model_name": "LogisticRegression",
+    "init_params": {"max_iter": 100},
 }
 
 
 def test_training(n_partitions: int = 3):
     # Prepare folders to use
     folder = Path("output")
+    if folder.exists():
+        shutil.rmtree(folder)
 
     input_folder = folder / "input" / "fake_did"
     output_folder = folder / "models" / "fake_did"
@@ -42,7 +48,8 @@ def test_training(n_partitions: int = 3):
     args_str += f" --aggregation_key {bytes(aggregation_key.public_key).hex()}"
 
     seeds = []
-    files = get_mnist_datafiles()
+    local_models = []  # Only for testing
+    files = get_mnist_datafiles(n_partitions)
 
     for i, file_path in enumerate(files):
         # Move file to input folder as train train dataset
@@ -51,7 +58,8 @@ def test_training(n_partitions: int = 3):
         seeds.append(random.randint(0, 1000000))
 
         args_str_final = f"{args_str} --seed {seeds[-1]}"
-        train.main(args_str_final.split(), f"{i}")
+        enc_model = train.main(args_str_final.split(), f"{i}")
+        local_models.append(enc_model)
 
     ### Aggregation section ###
     args_str = f"--output_folder {output_final}"
@@ -71,17 +79,24 @@ def test_training(n_partitions: int = 3):
         y_pred = np.rint(y_pred)
 
         print(f"\nModel - {name}")
-        print(y_pred)
-        print("Accuracy", accuracy_score(y_test, y_pred))
+        acc = accuracy_score(y_test, y_pred)
+        print("Accuracy", acc)
+        return acc
 
     model_test(final_model, "aggregated")
 
     ### Fully trained model ###
     new_model = load_model(input_folder.parent / "algoCustomData.json")
     new_model.fit(x_train, y_train)
-
     model_test(new_model, "full_data")
+
+    # Test local models
+    for i, (enc_model, seed) in enumerate(zip(local_models, seeds)):
+        data = decrypt_nacl(bytes(aggregation_key), enc_model)
+        model = load_model(data)
+        model.remove_noise_models([seed])
+        model_test(model, f"local_model_{i}")
 
 
 if __name__ == "__main__":
-    test_training()
+    test_training(N_PARTITIONS)

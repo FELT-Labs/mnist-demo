@@ -10,7 +10,7 @@ N_PARTITIONS = 3
 
 def _transform(x_data: np.ndarray) -> np.ndarray:
     """Feature transformation function, preserving length of data."""
-    return x_data.reshape((len(x_data), -1))
+    return x_data.reshape((len(x_data), -1)) / 255.0
 
 
 def create_datasets(
@@ -78,9 +78,4 @@ def get_mnist_datafiles(n_partitions=N_PARTITIONS) -> list[Path]:
 
 
 if __name__ == "__main__":
-    folder = Path("./output/data")
-    folder.mkdir(parents=True, exist_ok=True)
-
-    (x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
-
-    create_datasets(x_train, y_train, folder, N_PARTITIONS)
+    get_mnist_datafiles(N_PARTITIONS)
