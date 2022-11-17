@@ -5,7 +5,7 @@ import shutil
 from pathlib import Path
 
 import numpy as np
-from data import get_mnist_data, get_mnist_datafiles, transform_flat
+from data import get_mnist_data, get_mnist_datafiles, transform_cnn
 from feltlabs.algorithm import aggregate, train
 from feltlabs.core.cryptography import decrypt_nacl
 from feltlabs.model import load_model
@@ -13,33 +13,40 @@ from nacl.public import PrivateKey
 from sklearn.metrics import accuracy_score
 
 N_PARTITIONS = 3
-ITERATIONS = 8
+ITERATIONS = 1
 
 aggregation_key = PrivateKey.generate()
 
-# model_def = {
-#     "model_type": "sklearn",
-#     "model_name": "LogisticRegression",
-#     "init_params": {"max_iter": 100},
-# }
-
 model_def = {
-    "model_type": "sklearn",
-    "model_name": "MLPRegressor",
+    "model_type": "tensorflow",
+    "model_name": "EfficientNetB0",
     "init_params": {
-        "hidden_layer_sizes": [50, 50],
-        "max_iter": 50,
-        "warm_start": True,
+        "input_shape": [32, 32, 3],
+        "classes": 10,
+        "include_top": True,
+        "weights": None,
     },
 }
 
+# model_def = {
+#     "model_type": "sklearn",
+#     "model_name": "MLPClassifier",
+#     "init_params": {
+#         "hidden_layer_sizes": [50, 50],
+#         "max_iter": 50,
+#         "warm_start": True,
+#     },
+# }
 
-(x_train, y_train), (x_test, y_test) = get_mnist_data(transform_flat)
+
+(x_train, y_train), (x_test, y_test) = get_mnist_data(transform_cnn)
 
 
 def model_test(model, name=""):
-    y_pred = model.predict(x_test)
-    y_pred = np.rint(y_pred)
+    y_pred = np.argmax(
+        model.predict(x_test),
+        axis=-1,
+    )
 
     print(f"\nModel - {name}")
     print(y_test)
@@ -72,11 +79,12 @@ def test_training(n_partitions: int = 3):
         args_str = f"--output_folder {output_folder}"
         args_str += f" --input_folder {input_folder.parent}"
         args_str += f" --data_type pickle"
+        args_str += f" --experimental"
         args_str += f" --aggregation_key {bytes(aggregation_key.public_key).hex()}"
 
         seeds = []
         local_models = []  # Only for testing
-        files = get_mnist_datafiles(transform_flat, n_partitions)
+        files = get_mnist_datafiles(transform_cnn, n_partitions)
 
         for i, file_path in enumerate(files):
             # Move file to input folder as train train dataset
@@ -115,11 +123,11 @@ def test_training(n_partitions: int = 3):
     ### Fully trained model ###
     # Create custom data file (containing model definition)
     print("Full")
-    model_def["init_params"]["max_iter"] = 200
     with open(input_folder.parent / "algoCustomData.json", "w") as f:
         json.dump(model_def, f)
     new_model = load_model(input_folder.parent / "algoCustomData.json")
-    new_model.fit(x_train, y_train)
+    for i in range(ITERATIONS):
+        new_model.fit(x_train, y_train)
     model_test(new_model, "full_data")
 
 
