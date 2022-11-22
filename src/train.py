@@ -5,12 +5,14 @@ import shutil
 from pathlib import Path
 
 import numpy as np
-from data import get_mnist_data, get_mnist_datafiles, transform_flat
 from feltlabs.algorithm import aggregate, train
+from feltlabs.config import AggregationConfig, TrainingConfig
 from feltlabs.core.cryptography import decrypt_nacl
 from feltlabs.model import load_model
 from nacl.public import PrivateKey
 from sklearn.metrics import accuracy_score
+
+from data import get_mnist_data, get_mnist_datafiles, transform_flat
 
 N_PARTITIONS = 3
 ITERATIONS = 8
@@ -64,15 +66,19 @@ def test_training(n_partitions: int = 3):
     output_final.mkdir(parents=True, exist_ok=True)
 
     # Create custom data file (containing model definition)
-    with open(input_folder.parent / "algoCustomData.json", "w") as f:
+    custom_data_path = input_folder.parent / "algoCustomData.json"
+    with open(custom_data_path, "w") as f:
         json.dump(model_def, f)
 
     for i in range(ITERATIONS):
         ### Training section ###
-        args_str = f"--output_folder {output_folder}"
-        args_str += f" --input_folder {input_folder.parent}"
-        args_str += f" --data_type pickle"
-        args_str += f" --aggregation_key {bytes(aggregation_key.public_key).hex()}"
+        config = TrainingConfig(
+            output_folder=output_folder,
+            input_folder=input_folder.parent,
+            custom_data_path=custom_data_path,
+            data_type="pickle",
+            aggregation_key=bytes(aggregation_key.public_key),
+        )
 
         seeds = []
         local_models = []  # Only for testing
@@ -83,17 +89,19 @@ def test_training(n_partitions: int = 3):
             file_path.rename(input_folder / "0")
 
             seeds.append(random.randint(0, 1000000))
+            config.seed = seeds[-1]
 
-            args_str_final = f"{args_str} --seed {seeds[-1]}"
-            enc_model = train.main(args_str_final.split(), f"{i}")
+            enc_model = train.main(config=config, output_name=f"{i}")
             local_models.append(enc_model)
 
         ### Aggregation section ###
-        args_str = f"--output_folder {output_final}"
-        args_str += f" --input_folder {output_folder.parent}"
-        args_str += f" --private_key {bytes(aggregation_key).hex()}"
+        config = AggregationConfig(
+            output_folder=output_final,
+            input_folder=output_folder.parent,
+            private_key=bytes(aggregation_key),
+        )
 
-        aggregate.main(args_str.split(), "model")
+        aggregate.main(config=config, output_name="model")
 
         ### Test final results ###
         final_model = load_model(output_final / "model")
