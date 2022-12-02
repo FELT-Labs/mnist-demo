@@ -6,8 +6,6 @@ from typing import Callable
 import numpy as np
 import tensorflow as tf
 
-N_PARTITIONS = 3
-
 
 def transform_flat(x_data: np.ndarray) -> np.ndarray:
     """Feature transformation function, preserving length of data."""
@@ -68,7 +66,7 @@ def get_mnist_data(
 
 
 def get_mnist_datafiles(
-    transform: Callable[[np.ndarray], np.ndarray], n_partitions=N_PARTITIONS
+    transform: Callable[[np.ndarray], np.ndarray], n_partitions=3
 ) -> list[Path]:
     """Get paths to MNIST datafiles for training.
 
@@ -78,7 +76,7 @@ def get_mnist_datafiles(
     Returns:
         list of paths to created dataset files
     """
-    folder = Path("./output/data")
+    folder = Path("./output_data")
     folder.mkdir(parents=True, exist_ok=True)
 
     (x_train, y_train), _ = get_mnist_data(transform)
@@ -86,4 +84,5 @@ def get_mnist_datafiles(
 
 
 if __name__ == "__main__":
-    get_mnist_datafiles(transform_flat, N_PARTITIONS)
+    partitions = 3
+    get_mnist_datafiles(transform_flat, partitions)

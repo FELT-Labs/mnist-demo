@@ -41,7 +41,7 @@ clean:
 	rm -rf $(VENV_NAME) *.eggs *.egg-info dist build docs/_build .cache
 
 run:
-	${PYTHON} src/train.py 
+	${PYTHON} src/experiment.py 
 
 lint: venv
 	${PYTHON} -m flake8 feltlabs

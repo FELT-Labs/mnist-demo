@@ -131,4 +131,5 @@ dmypy.json
 
 # Custom
 output/
+output_data/
 notebooks/
