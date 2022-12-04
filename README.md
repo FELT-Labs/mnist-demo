@@ -8,7 +8,9 @@ First install **Python 3.9** and requirements as:
 pip install -r requirements
 ```
 
-Run the training script
+Start jupyter lab environment
 ```bash
-python src/train.py
+jupyter lab
 ```
+
+Open notebook [main_tests.ipynb](./main_tests.ipynb) with experiments
