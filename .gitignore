@@ -133,3 +133,4 @@ dmypy.json
 output/
 output_data/
 notebooks/
+images/

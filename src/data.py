@@ -1,5 +1,6 @@
 import pickle
 import random
+import shutil
 from pathlib import Path
 from typing import Callable
 
@@ -14,7 +15,7 @@ def transform_flat(x_data: np.ndarray) -> np.ndarray:
 
 def transform_cnn(x_data: np.ndarray) -> np.ndarray:
     """Feature transformation function, for CNN networks requiring (32, 32, 3) shape."""
-    data = x_data.reshape((len(x_data), 28, 28, 1)) / 255.0
+    data = (x_data.reshape((len(x_data), 28, 28, 1)) - 127.5) / 127.5
     return np.pad(np.concatenate(3 * [data], axis=-1), [(0, 0), (2, 2), (2, 2), (0, 0)])
 
 
@@ -77,6 +78,8 @@ def get_mnist_datafiles(
         list of paths to created dataset files
     """
     folder = Path("./output_data")
+    if folder.exists():
+        shutil.rmtree(folder)
     folder.mkdir(parents=True, exist_ok=True)
 
     (x_train, y_train), _ = get_mnist_data(transform)
@@ -84,5 +87,7 @@ def get_mnist_datafiles(
 
 
 if __name__ == "__main__":
+    # TODO: Argparse - for generating data using CLI
+    # TODO: Add FELT json config file as well
     partitions = 3
     get_mnist_datafiles(transform_flat, partitions)
