@@ -41,8 +41,9 @@ def _prepare_folders():
 def _model_to_customdata(model_definition: dict, folder: Path) -> Path:
     """Create custom data file containing model definition."""
     custom_data_path = folder.parent / "algoCustomData.json"
+    data = {"model_definition": model_definition}
     with open(custom_data_path, "w") as f:
-        json.dump(model_definition, f)
+        json.dump(data, f)
     return custom_data_path
 
 
