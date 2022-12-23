@@ -2,6 +2,7 @@
 from typing import Any, Callable
 
 import numpy as np
+from feltlabs.core.models.base_model import BaseModel
 from feltlabs.model import load_model
 from sklearn.metrics import accuracy_score
 
@@ -13,7 +14,7 @@ from train import federated_training
 def _create_eval_function(x_test, y_test):
     """Create evaluation function for the models."""
 
-    def model_test(model):
+    def model_test(model: BaseModel):
         y_pred = model.predict(x_test)
         # tensorflow model uses softmax, need to reduce
         if len(y_pred.shape) == 2:

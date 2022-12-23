@@ -2,7 +2,7 @@ import pickle
 import random
 import shutil
 from pathlib import Path
-from typing import Callable
+from typing import Callable, List, Tuple
 
 import numpy as np
 import tensorflow as tf
@@ -21,7 +21,7 @@ def transform_cnn(x_data: np.ndarray) -> np.ndarray:
 
 def create_datasets(
     x_train: np.ndarray, y_train: np.ndarray, output_folder: Path, n_partitions: int = 3
-) -> list[Path]:
+) -> List[Path]:
     """Create random partitions of original data and store them in dataset files.
 
     Args:
@@ -56,7 +56,7 @@ def create_datasets(
 
 def get_mnist_data(
     transform: Callable[[np.ndarray], np.ndarray]
-) -> tuple[tuple[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray]]:
+) -> Tuple[Tuple[np.ndarray, np.ndarray], Tuple[np.ndarray, np.ndarray]]:
     """Get test data for MNIST dataset.
 
     Returns:
@@ -68,7 +68,7 @@ def get_mnist_data(
 
 def get_mnist_datafiles(
     transform: Callable[[np.ndarray], np.ndarray], n_partitions=3
-) -> list[Path]:
+) -> List[Path]:
     """Get paths to MNIST datafiles for training.
 
     Args:

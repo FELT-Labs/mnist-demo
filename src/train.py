@@ -3,7 +3,7 @@ import json
 import random
 import shutil
 from pathlib import Path
-from typing import Callable
+from typing import Callable, List
 
 from feltlabs.algorithm import aggregate, train
 from feltlabs.config import AggregationConfig, TrainingConfig
@@ -57,7 +57,7 @@ def _decrypt_model(enc_model: bytes, seed: int) -> BaseModel:
 
 def federated_training(
     model_definition: dict,
-    data_files: list[Path],
+    data_files: List[Path],
     eval_function: Callable,
     iterations: int = 1,
 ):
